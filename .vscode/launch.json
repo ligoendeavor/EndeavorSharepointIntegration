@@ -1,0 +1,18 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "al",
+            "request": "launch",
+            "name": "Microsoft cloud IntegrationTest",
+            "startupObjectId": 143,
+            "startupObjectType": "Page",
+            "breakOnError": true,
+            "launchBrowser": true,
+            //"enableLongRunningSqlStatements": true,
+            //"enableSqlInformationDebugger": true,
+            "sandboxName": "IntegrationTest",
+            "schemaUpdateMode": "ForceSync"
+        }
+    ]
+}
