@@ -48,10 +48,11 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         vHttpClient.Clear();
         vHttpClient.Timeout(60000);
 
-        if (SharepointSite = '') or (SharepointDocLibrary = '') or (SharepointFullRelativeUrl = '') or (FileName = '')
+        if (SharepointSite = '') or (SharepointDocLibrary = '') or (SharepointFullRelativeUrl = '')
         then begin
-            if GuiAllowed then
-                message(CanNotConstructURL);
+            // if GuiAllowed then
+            //     message(CanNotConstructURL);
+            LogActivity(SalesInvoiceVariant, '', 'PutDocumentOnSP', 'No URLs available on invoice.', '', '', false);
             exit;
         end;
 
@@ -510,6 +511,14 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
                     JToken.AsObject().Replace(KeyValue, '***');
                 JObject.WriteTo(Result);
             end;
+    end;
+
+    procedure IsSharepointIntegrationEnabled(): Boolean
+    var
+        SPIntSetup: Record "EDX09 Sharepoint Int. Setup";
+    begin
+        SPIntSetup.Get();
+        exit(SPIntSetup."EDX09 Enabled");
     end;
 
     // local procedure PutLargeDocumentOnSP(AccessToken: Text; DocumentStream: InStream; FileName: Text)

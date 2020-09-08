@@ -9,6 +9,7 @@ pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoice
                 ApplicationArea = All;
                 Caption = 'Upload PDF to Sharepoint';
                 Image = SendAsPDF;
+                Visible = ShowSharepointAction;
 
                 trigger OnAction()
                 var
@@ -37,6 +38,14 @@ pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoice
         }
     }
 
+    trigger OnOpenPage()
+    var
+        SPIntMgmt: Codeunit "EDX09 Sharepoint Int. Mgmt.";
+    begin
+        ShowSharepointAction := SPIntMgmt.IsSharepointIntegrationEnabled();
+    end;
+
     var
         UploadQuestion: Label 'Do you want to upload PDF to Sharepoint? Existing file will be replaced.';
+        ShowSharepointAction: Boolean;
 }

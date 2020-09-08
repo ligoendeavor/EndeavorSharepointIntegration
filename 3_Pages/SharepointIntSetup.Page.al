@@ -17,6 +17,10 @@ page 87001 "EDX09 Sharepoint Int. Setup"
                     ApplicationArea = All;
                     Visible = false;
                 }
+                field("EDX09 Enabled"; "EDX09 Enabled")
+                {
+                    ApplicationArea = All;
+                }
                 field("EDX09 Description"; "EDX09 Description")
                 {
                     ApplicationArea = All;

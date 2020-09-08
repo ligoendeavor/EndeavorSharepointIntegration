@@ -20,16 +20,18 @@ codeunit 87000 "EDX09 Sharepoint Int. Events"
         if SalesInvHdrNo <> '' then begin
             SalesInvoice.SetRange("No.", SalesInvHdrNo);
             if SalesInvoice.findset then begin
-                DocumentRef.Get(SalesInvoice.RecordId);
-                FieldRef := DocumentRef.FIELD(SalesInvoice.FieldNo("No."));
-                FieldRef.SETFILTER(SalesInvHdrNo);
+                if SPMgmt.IsSharepointIntegrationEnabled() then begin
+                    DocumentRef.Get(SalesInvoice.RecordId);
+                    FieldRef := DocumentRef.FIELD(SalesInvoice.FieldNo("No."));
+                    FieldRef.SETFILTER(SalesInvHdrNo);
 
-                tempBlob.CreateOutStream(outStreamReport, TextEncoding::UTF8);
-                Report.SaveAs(Report::"Standard Sales - Invoice", '', ReportFormat::Pdf, outStreamReport, DocumentRef);
+                    tempBlob.CreateOutStream(outStreamReport, TextEncoding::UTF8);
+                    Report.SaveAs(Report::"Standard Sales - Invoice", '', ReportFormat::Pdf, outStreamReport, DocumentRef);
 
-                SPMgmt.GetAccessToken(AccessToken);
-                tempBlob.CreateInStream(DocumentStream);
-                SPMgmt.PutDocumentOnSP(AccessToken, SalesInvoice.RecordId(), DocumentStream, StrSubstNo('%1.pdf', SalesInvHdrNo), SalesInvoice."EDX Sharepoint Site", SalesInvoice."EDX Sharepoint Doc Library", SalesInvoice."EDX Sharepoint Full Url");
+                    SPMgmt.GetAccessToken(AccessToken);
+                    tempBlob.CreateInStream(DocumentStream);
+                    SPMgmt.PutDocumentOnSP(AccessToken, SalesInvoice.RecordId(), DocumentStream, StrSubstNo('%1.pdf', SalesInvHdrNo), SalesInvoice."EDX Sharepoint Site", SalesInvoice."EDX Sharepoint Doc Library", SalesInvoice."EDX Sharepoint Full Url");
+                end;
             end;
         end;
     end;

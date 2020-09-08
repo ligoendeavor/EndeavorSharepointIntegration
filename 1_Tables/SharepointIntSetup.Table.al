@@ -103,6 +103,10 @@ table 87000 "EDX09 Sharepoint Int. Setup"
             Caption = 'Access Token Due DateTime';
             Editable = false;
         }
+        field(87018; "EDX09 Enabled"; Boolean)
+        {
+            Caption = 'Enabled';
+        }
     }
 
     keys
