@@ -2,7 +2,7 @@
   "id": "3576b92a-24ca-4661-a8ba-6ffe707595cb",
   "name": "EndeavorSharepointIntegration",
   "publisher": "Endeavor ERP AB",
-  "version": "16.4.1.0",
+  "version": "16.4.2.0",
   "brief": "",
   "description": "",
   "privacyStatement": "",
@@ -24,9 +24,9 @@
       "version": "16.0.0.0"
     },
     {
-      "id": "1deb0be1-d6a7-4282-a1f2-588a57ba9fa9",
+      "id": "c0729aca-8a17-4fd5-b461-9a1571111a1e",
       "publisher": "Endeavor ERP AB",
-      "name": "Endeavor Ready D365 For Sales PLM",
+      "name": "Endeavor Ready for Dynamics 365 Business Central",
       "version": "16.0.0.0"
     }
   ],

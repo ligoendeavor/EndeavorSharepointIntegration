@@ -98,6 +98,11 @@ table 87000 "EDX09 Sharepoint Int. Setup"
                 CheckAndAppendURLPostPath("EDX09 MS Graph URL Path");
             end;
         }
+        field(87017; "EDX09 Access Token Due Date"; DateTime)
+        {
+            Caption = 'Access Token Due DateTime';
+            Editable = false;
+        }
     }
 
     keys
@@ -111,6 +116,25 @@ table 87000 "EDX09 Sharepoint Int. Setup"
     var
         SPIntMgmt: Codeunit "EDX09 Sharepoint Int. Mgmt.";
 
+    trigger OnDelete()
+    begin
+        DeleteToken("EDX09 Client ID");
+        DeleteToken("EDX09 Client Secret");
+        DeleteToken("EDX09 Access Token");
+    end;
+
+    local procedure DeleteToken(TokenKey: Guid)
+    begin
+        if not HasToken(TokenKey) then
+            exit;
+
+        IsolatedStorage.Delete(TokenKey, DataScope::Module);
+    end;
+
+    procedure HasToken(TokenKey: Guid): Boolean
+    begin
+        exit(not IsNullGuid(TokenKey) and IsolatedStorage.Contains(TokenKey, DataScope::Module));
+    end;
 
     local procedure CheckAndAppendURLPath(var value: Text)
     begin
@@ -126,7 +150,23 @@ table 87000 "EDX09 Sharepoint Int. Setup"
                 value := value + '/';
     end;
 
-    procedure SetSecret(NewSecret: Text)
+    procedure SetClientID(NewClientID: Text)
+    begin
+        if IsNullGuid("EDX09 Client ID") then
+            "EDX09 Client ID" := CreateGuid;
+
+        IsolatedStorage.Set("EDX09 Client ID", NewClientID, DATASCOPE::Module);
+    end;
+
+    procedure GetClientID(): Text
+    var
+        Value: Text;
+    begin
+        IsolatedStorage.Get("EDX09 Client ID", DATASCOPE::Module, Value);
+        exit(Value);
+    end;
+
+    procedure SetClientSecret(NewSecret: Text)
     begin
         if IsNullGuid("EDX09 Client Secret") then
             "EDX09 Client Secret" := CreateGuid;
@@ -134,11 +174,27 @@ table 87000 "EDX09 Sharepoint Int. Setup"
         IsolatedStorage.Set("EDX09 Client Secret", NewSecret, DATASCOPE::Module);
     end;
 
-    procedure GetSecret(): Text
+    procedure GetClientSecret(): Text
     var
         Value: Text;
     begin
         IsolatedStorage.Get("EDX09 Client Secret", DATASCOPE::Module, Value);
+        exit(Value);
+    end;
+
+    procedure SetAccessToken(NewAccessToken: Text)
+    begin
+        if IsNullGuid("EDX09 Access Token") then
+            "EDX09 Access Token" := CreateGuid;
+
+        IsolatedStorage.Set("EDX09 Access Token", NewAccessToken, DATASCOPE::Module);
+    end;
+
+    procedure GetAccessToken(): Text
+    var
+        Value: Text;
+    begin
+        IsolatedStorage.Get("EDX09 Access Token", DATASCOPE::Module, Value);
         exit(Value);
     end;
 

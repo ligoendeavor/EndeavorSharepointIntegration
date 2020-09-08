@@ -53,9 +53,17 @@ page 87001 "EDX09 Sharepoint Int. Setup"
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Client ID"; "EDX09 Client ID")
+                field(clitenID; ClientID)
                 {
                     ApplicationArea = All;
+                    Caption = 'Client ID', Locked = true;
+                    ToolTip = 'Specifies the client ID of the API application.';
+
+                    trigger OnValidate()
+                    begin
+                        SetClientID(ClientID);
+                        Clear(ClientID);
+                    end;
                 }
                 field(clitenSecret; ClientSecret)
                 {
@@ -65,7 +73,7 @@ page 87001 "EDX09 Sharepoint Int. Setup"
 
                     trigger OnValidate()
                     begin
-                        SetSecret(ClientSecret);
+                        SetClientSecret(ClientSecret);
                         Clear(ClientSecret);
                     end;
                 }
@@ -73,8 +81,30 @@ page 87001 "EDX09 Sharepoint Int. Setup"
         }
     }
 
+    actions
+    {
+        area(Processing)
+        {
+            action(ActivityLog)
+            {
+                Caption = 'Activity Log';
+                ApplicationArea = All;
+                Image = Log;
+
+                trigger OnAction()
+                var
+                    ActivityLog: Record "Activity Log";
+                begin
+                    ActivityLog.ShowEntries(Rec);
+                end;
+
+            }
+        }
+    }
+
     var
         ClientSecret: Text;
+        ClientID: Text;
 
 
 }

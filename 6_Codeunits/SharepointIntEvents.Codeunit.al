@@ -17,8 +17,6 @@ codeunit 87000 "EDX09 Sharepoint Int. Events"
         SharepointURL: Text;
         SPMgmt: Codeunit "EDX09 Sharepoint Int. Mgmt.";
     begin
-        exit;
-
         if SalesInvHdrNo <> '' then begin
             SalesInvoice.SetRange("No.", SalesInvHdrNo);
             if SalesInvoice.findset then begin
@@ -31,7 +29,7 @@ codeunit 87000 "EDX09 Sharepoint Int. Events"
 
                 SPMgmt.GetAccessToken(AccessToken);
                 tempBlob.CreateInStream(DocumentStream);
-                SPMgmt.PutDocumentOnSP(AccessToken, DocumentStream, StrSubstNo('%1.pdf', SalesInvHdrNo), SalesInvoice."EDXpm Sharepoint Site", SalesInvoice."EDXpm Sharepoint Doc Library", SalesInvoice."EDXpm Sharepoint Full Url");
+                SPMgmt.PutDocumentOnSP(AccessToken, SalesInvoice.RecordId(), DocumentStream, StrSubstNo('%1.pdf', SalesInvHdrNo), SalesInvoice."EDX Sharepoint Site", SalesInvoice."EDX Sharepoint Doc Library", SalesInvoice."EDX Sharepoint Full Url");
             end;
         end;
     end;

@@ -1,10 +1,5 @@
 pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoices"
 {
-    layout
-    {
-
-    }
-
     actions
     {
         addlast(processing)
@@ -18,10 +13,7 @@ pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoice
                 trigger OnAction()
                 var
                     outStreamReport: OutStream;
-                    inStreamReport: InStream;
-                    Parameters: Text;
                     tempBlob: Codeunit "Temp Blob";
-                    Base64EncodedString: Text;
                     AccessToken: Text;
                     DocumentStream: InStream;
                     DocumentRef: RecordRef;
@@ -34,14 +26,12 @@ pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoice
                     FieldRef.SETFILTER("No.");
 
                     tempBlob.CreateOutStream(outStreamReport, TextEncoding::UTF8);
-
                     Report.SaveAs(Report::"Standard Sales - Invoice", '', ReportFormat::Pdf, outStreamReport, DocumentRef);
-                    //Report.SaveAs(Report::"Standard Sales - Invoice", Parameters, ReportFormat::Pdf, outStreamReport);
 
                     SPMgmt.GetAccessToken(AccessToken);
                     tempBlob.CreateInStream(DocumentStream);
                     if Confirm(UploadQuestion) then
-                        SPMgmt.PutDocumentOnSP(AccessToken, DocumentStream, StrSubstNo('%1.pdf', "No."), "EDXpm Sharepoint Site", "EDXpm Sharepoint Doc Library", "EDXpm Sharepoint Full Url");
+                        SPMgmt.PutDocumentOnSP(AccessToken, RecordId(), DocumentStream, StrSubstNo('%1.pdf', "No."), "EDX Sharepoint Site", "EDX Sharepoint Doc Library", "EDX Sharepoint Full Url");
                 end;
             }
         }

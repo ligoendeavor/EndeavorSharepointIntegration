@@ -11,12 +11,24 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         HttpError: Text;
     begin
         SPIntSetup.Get();
-        CreateContentRequestForAccessToken(RequestUrlContent, SPIntSetup.GetSecret(), format(SPIntSetup."EDX09 Client ID"), SPIntSetup."EDX09 Redirect URL", SPIntSetup."EDX09 Scope");
-        CreateRequestJSONForAccessRefreshTokenUrlEncoded(RequestJson, SPIntSetup."EDX09 Service URL", SPIntSetup."EDX09 Access Token URL Path", RequestUrlContent);
-        RequestAccessAndRefreshTokens(RequestJson, ResponseJson, AccessToken, RefreshToken, ExpireInSec, HttpError);
+
+        if ((SPIntSetup."EDX09 Access Token Due Date" <> 0DT) AND (SPIntSetup."EDX09 Access Token Due Date" < CurrentDateTime())) or
+            ((SPIntSetup."EDX09 Access Token Due Date" = 0DT) or (IsNullGuid(SPIntSetup."EDX09 Access Token"))) then begin
+            CreateContentRequestForAccessToken(RequestUrlContent, SPIntSetup.GetClientSecret(), format(SPIntSetup.GetClientID()), SPIntSetup."EDX09 Redirect URL", SPIntSetup."EDX09 Scope");
+            CreateRequestJSONForAccessRefreshTokenUrlEncoded(RequestJson, SPIntSetup."EDX09 Service URL", SPIntSetup."EDX09 Access Token URL Path", RequestUrlContent);
+            RequestAccessAndRefreshTokens(RequestJson, ResponseJson, AccessToken, RefreshToken, ExpireInSec, HttpError);
+
+            if HttpError = '' then
+                SaveToken(SPIntSetup, AccessToken, ExpireInSec)
+            else
+                LogActivity(SPIntSetup, '', 'GetAccessToken', HttpError, RequestJson, ResponseJson, true);
+        end else begin
+            // Check if we can use last fetched access token
+            AccessToken := SPIntSetup.GetAccessToken();
+        end;
     end;
 
-    procedure PutDocumentOnSP(AccessToken: Text; DocumentStream: InStream; FileName: Text; SharepointSite: Text; SharepointDocLibrary: Text; SharepointFullRelativeUrl: Text)
+    procedure PutDocumentOnSP(AccessToken: Text; SalesInvoiceVariant: Variant; DocumentStream: InStream; FileName: Text; SharepointSite: Text; SharepointDocLibrary: Text; SharepointFullRelativeUrl: Text)
     var
         URL: Text;
         vRequestContent: HttpContent;
@@ -24,15 +36,24 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         vHttpRequestMessage: HttpRequestMessage;
         //vHttpClient: HttpClient;
         vHttpResponseMessage: HttpResponseMessage;
+        RequestText: Text;
         ResponseText: Text;
-        OAuthSetup: Record "OAuth 2.0 Setup";
         siteID: Text;
         driveID: Text;
         folderPath: Text;
+        HttpError: Text;
+        ErrorMessage: Text;
     begin
-        OAuthSetup.Get();
+        ErrorMessage := '';
         vHttpClient.Clear();
         vHttpClient.Timeout(60000);
+
+        if (SharepointSite = '') or (SharepointDocLibrary = '') or (SharepointFullRelativeUrl = '') or (FileName = '')
+        then begin
+            if GuiAllowed then
+                message(CanNotConstructURL);
+            exit;
+        end;
 
         URL := ConstructUploadURL(AccessToken, SharepointSite, SharepointDocLibrary, SharepointFullRelativeUrl, FileName);
 
@@ -48,10 +69,22 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
             vHttpRequestMessage.SetRequestUri(URL);
             vHttpRequestMessage.Content := vRequestContent;
 
-            vHttpClient.Send(vHttpRequestMessage, vHttpResponseMessage);
+            if not vHttpClient.Send(vHttpRequestMessage, vHttpResponseMessage) then
+                if vHttpResponseMessage.IsBlockedByEnvironment() then
+                    ErrorMessage := StrSubstNo(EnvironmentBlocksErr, vHttpRequestMessage.GetRequestUri())
+                else
+                    ErrorMessage := StrSubstNo(ConnectionErr, vHttpRequestMessage.GetRequestUri());
+
+            if ErrorMessage <> '' then
+                Error(ErrorMessage);
+
 
             vHttpResponseMessage.Content().ReadAs(ResponseText);
-            //Message(ResponseText);
+            ProcessHttpResponseMessage(vHttpResponseMessage, ResponseText, HttpError);
+
+            if HttpError <> '' then begin
+                LogActivity(SalesInvoiceVariant, FileName, 'PutDocumentOnSP', HttpError, '', ResponseText, true);
+            end;
         end;
     end;
 
@@ -63,7 +96,6 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         ClientIdText: Text;
     begin
         UrlString += 'client_secret=' + TypeHelper.UrlEncode(ClientSecret);
-        //ClientIdText := '377e1515-0efa-43e0-bed0-b3fa2f261c79';
         UrlString += '&client_id=' + TypeHelper.UrlEncode(ClientId);
         UrlString += '&scope=' + TypeHelper.UrlEncode(Scope);
         UrlString += '&grant_type=client_credentials';
@@ -115,35 +147,6 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
             exit(ParseAccessAndRefreshTokens(ResponseJson, AccessToken, RefreshToken, ExpireInSec));
     end;
 
-    // local procedure CallWebService()
-    // var
-    //     URL: Text;
-    //     vRequestContent: HttpContent;
-    //     vContentHeaders: HttpHeaders;
-    //     vHttpRequestMessage: HttpRequestMessage;
-    //     //vHttpClient: HttpClient;
-    //     vHttpResponseMessage: HttpResponseMessage;
-    //     ResponseText: Text;
-    // begin
-    //     vHttpClient.Clear();
-    //     vHttpClient.Timeout(60000);
-    //     URL := 'https://login.microsoftonline.com/3b2de1f1-4306-444d-bed8-e724ef455f1d/oauth2/v2.0/token';
-
-    //     vRequestContent.WriteFrom('grant_type=client_credentials&client_id=377e1515-0efa-43e0-bed0-b3fa2f261c79&client_secret=o4HbRPa~FUz8~eAq0INy111Nd.~_XyIH1d&scope=https://graph.microsoft.com/.default');
-    //     vRequestContent.GetHeaders(vContentHeaders);
-    //     vContentHeaders.Clear();
-    //     vContentHeaders.Add('Content-Type', 'application/x-www-form-urlencoded');
-
-    //     vHttpRequestMessage.Method := 'POST';
-    //     vHttpRequestMessage.SetRequestUri(URL);
-    //     vHttpRequestMessage.Content := vRequestContent;
-
-    //     vHttpClient.Send(vHttpRequestMessage, vHttpResponseMessage);
-
-    //     vHttpResponseMessage.Content().ReadAs(ResponseText);
-    //     Message(ResponseText);
-    // end;
-
     local procedure InvokeHttpJSONRequest(RequestJson: Text; var ResponseJson: Text; var HttpError: Text) Result: Boolean
     var
         Client: HttpClient;
@@ -153,11 +156,11 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
     begin
         ResponseJson := '';
         HttpError := '';
+        ErrorMessage := '';
 
         Client.Clear();
         Client.Timeout(60000);
         InitHttpRequest(RequestMessage, RequestJson);
-        //InitHttpRequestMessage(RequestMessage, RequestJson);
 
         if not Client.Send(RequestMessage, ResponseMessage) then
             if ResponseMessage.IsBlockedByEnvironment() then
@@ -187,7 +190,7 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
                 SPIntSetup.Get();
                 if JToken.SelectToken('Content', ContentJToken) then begin
                     ContentJToken.WriteTo(ContentJson);
-                    RequestContent.WriteFrom('grant_type=client_credentials&client_id=' + SPIntSetup."EDX09 Client ID" + '&client_secret=' + SPIntSetup.GetSecret() + '&scope=' + SPIntSetup."EDX09 Scope");
+                    RequestContent.WriteFrom('grant_type=client_credentials&client_id=' + SPIntSetup.GetClientID() + '&client_secret=' + SPIntSetup.GetClientSecret() + '&scope=' + SPIntSetup."EDX09 Scope");
                     RequestContent.GetHeaders(ContentHeaders);
                     ContentHeaders.Clear();
                     ContentHeaders.Add('Content-Type', 'application/x-www-form-urlencoded');
@@ -274,6 +277,16 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         exit(true);
     end;
 
+    local procedure SaveToken(var SPIntSetup: Record "EDX09 Sharepoint Int. Setup"; AccessToken: Text; ExpireInSec: BigInteger)
+    begin
+        with SPIntSetup do begin
+            "EDX09 Access Token Due Date" := CurrentDateTime() + ExpireInSec * 1000;
+            SetAccessToken(AccessToken);
+            Modify();
+            Commit();
+        end;
+    end;
+
     local procedure ConstructUploadURL(AccessToken: Text; SharepointSite: Text; SharepointDocLibrary: Text; SharepointFullRelativeUrl: Text; FileName: Text): Text
     var
         SiteID: Text;
@@ -282,8 +295,6 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         Length: Integer;
         SPIntSetup: Record "EDX09 Sharepoint Int. Setup";
     begin
-        //URL := 'https://graph.microsoft.com/v1.0/sites/plmgroupcompany.sharepoint.com,bfc455a2-f7ce-4a13-a8b0-e52a8fd333c7,99184950-e351-4948-b7da-7a36458b3b6e/drives/b!olXEv873E0qosOUqj9Mzx1BJGJlR40hJt9p6NkWLO26aWYcqXdnhRbjmXLxrYqCO/root:/TestAccountPL2_b9c2f7cb-56ec-ea11-a817-0/invoice/INV-01567-L2T7N6_9f942398-edec-ea11-a817/extensionsPermissionSet.xml:/content'
-
         SiteID := GetSPSiteID(AccessToken, SharepointSite);
         DriveID := GetSPDriveID(AccessToken, SharepointSite, SharepointDocLibrary);
         Length := StrLen(SharepointDocLibrary);
@@ -304,10 +315,15 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         HttpClient: HttpClient;
         HttpResponseMessage: HttpResponseMessage;
         ResponseText: Text;
+        ResponseJson: Text;
         SPIntSetup: Record "EDX09 Sharepoint Int. Setup";
         DocumentSite: Text;
         Length: Integer;
+        HttpError: Text;
+        ErrorMessage: Text;
     begin
+        ErrorMessage := '';
+
         SPIntSetup.Get();
         Length := StrLen('https://' + SPIntSetup."EDX09 Sharepoint Base URL" + '/sites/');
         DocumentSite := CopyStr(SharepointSite, StrPos(SharepointSite, 'https://' + SPIntSetup."EDX09 Sharepoint Base URL" + '/sites/') + Length);
@@ -318,9 +334,24 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
 
         HttpRequestMessage.Method := 'GET';
         HttpRequestMessage.SetRequestUri(SPIntSetup."EDX09 MS Graph URL Path" + SPIntSetup."EDX09 Sharepoint Base URL" + ':/sites/' + DocumentSite);
-        HttpClient.Send(HttpRequestMessage, HttpResponseMessage);
+
+        if not HttpClient.Send(HttpRequestMessage, HttpResponseMessage) then
+            if HttpResponseMessage.IsBlockedByEnvironment() then
+                ErrorMessage := StrSubstNo(EnvironmentBlocksErr, HttpRequestMessage.GetRequestUri())
+            else
+                ErrorMessage := StrSubstNo(ConnectionErr, HttpRequestMessage.GetRequestUri());
+
+        if ErrorMessage <> '' then
+            Error(ErrorMessage);
 
         HttpResponseMessage.Content().ReadAs(ResponseText);
+        ResponseJson := ResponseText;
+        ProcessHttpResponseMessage(HttpResponseMessage, ResponseJson, HttpError);
+
+        if HttpError <> '' then begin
+            LogActivity(SPIntSetup.RecordId(), '', 'GetSPSiteID', HttpError, '', ResponseJson, false);
+        end;
+
         exit(ParseSPSiteID(ResponseText));
     end;
 
@@ -346,10 +377,15 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         HttpClient: HttpClient;
         HttpResponseMessage: HttpResponseMessage;
         ResponseText: Text;
+        ResponseJson: Text;
         SPIntSetup: Record "EDX09 Sharepoint Int. Setup";
         DocumentSite: Text;
         Length: Integer;
+        HttpError: Text;
+        ErrorMessage: Text;
     begin
+        ErrorMessage := '';
+
         SPIntSetup.Get();
         Length := StrLen('https://' + SPIntSetup."EDX09 Sharepoint Base URL" + '/sites/');
         DocumentSite := CopyStr(SharepointSite, StrPos(SharepointSite, 'https://' + SPIntSetup."EDX09 Sharepoint Base URL" + '/sites/') + Length);
@@ -360,9 +396,24 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
 
         HttpRequestMessage.Method := 'GET';
         HttpRequestMessage.SetRequestUri(SPIntSetup."EDX09 MS Graph URL Path" + SPIntSetup."EDX09 Sharepoint Base URL" + ':/sites/' + DocumentSite + ':/drives');
-        HttpClient.Send(HttpRequestMessage, HttpResponseMessage);
+
+        if not HttpClient.Send(HttpRequestMessage, HttpResponseMessage) then
+            if HttpResponseMessage.IsBlockedByEnvironment() then
+                ErrorMessage := StrSubstNo(EnvironmentBlocksErr, HttpRequestMessage.GetRequestUri())
+            else
+                ErrorMessage := StrSubstNo(ConnectionErr, HttpRequestMessage.GetRequestUri());
+
+        if ErrorMessage <> '' then
+            Error(ErrorMessage);
 
         HttpResponseMessage.Content().ReadAs(ResponseText);
+        ResponseJson := ResponseText;
+        ProcessHttpResponseMessage(HttpResponseMessage, ResponseJson, HttpError);
+
+        if HttpError <> '' then begin
+            LogActivity(SPIntSetup.RecordId(), '', 'GetSPDriveID', HttpError, '', ResponseJson, false);
+        end;
+
         exit(ParseSPDriveID(ResponseText, SharepointDocLibrary));
     end;
 
@@ -408,7 +459,58 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
         exit(true);
     end;
 
+    procedure LogActivity(RelatedVariant: Variant; ContextCode: Text; ActivityDescription: Text; ActivityMessage: Text; RequestJson: Text; ResponseJson: Text; MaskContent: Boolean)
+    var
+        ActivityLog: Record "Activity Log";
+        JObject: JsonObject;
+        JToken: JsonToken;
+        RequestJObject: JsonObject;
+        ResponseJObject: JsonObject;
+        Context: Text[30];
+        Status: Option;
+        JsonString: Text;
+        DetailedInfoExists: Boolean;
+    begin
+        Context := CopyStr(StrSubstNo('%1 %2', ActivityLogContextTxt, ContextCode), 1, MaxStrLen(Context));
+        Status := ActivityLog.Status::Failed;
 
+        ActivityLog.LogActivity(RelatedVariant, Status, Context, ActivityDescription, ActivityMessage);
+        if RequestJObject.ReadFrom(MaskHeaders(RequestJson)) then begin
+            if MaskContent then
+                if RequestJObject.SelectToken('Content', JToken) then
+                    RequestJObject.Replace('Content', '***');
+            JObject.Add('Request', RequestJObject);
+            DetailedInfoExists := true;
+        end;
+        if ResponseJObject.ReadFrom(ResponseJson) then begin
+            if MaskContent then
+                if ResponseJObject.SelectToken('Content', JToken) then
+                    ResponseJObject.Replace('Content', '***');
+            JObject.Add('Response', ResponseJObject);
+            DetailedInfoExists := true;
+        end;
+        if DetailedInfoExists then
+            if JObject.WriteTo(JsonString) then
+                if JsonString <> '' then
+                    ActivityLog.SetDetailedInfoFromText(JsonString);
+
+        Commit(); // need to prevent rollback to save the log
+    end;
+
+    local procedure MaskHeaders(RequestJson: Text) Result: Text;
+    var
+        JObject: JsonObject;
+        JToken: JsonToken;
+        KeyValue: Text;
+    begin
+        Result := RequestJson;
+        if JObject.ReadFrom(RequestJson) then
+            if JObject.SelectToken('Header', JToken) then begin
+                foreach KeyValue in JToken.AsObject().Keys() do
+                    JToken.AsObject().Replace(KeyValue, '***');
+                JObject.WriteTo(Result);
+            end;
+    end;
 
     // local procedure PutLargeDocumentOnSP(AccessToken: Text; DocumentStream: InStream; FileName: Text)
     // var
@@ -530,5 +632,7 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
     var
         EnvironmentBlocksErr: Label 'Environment blocks an outgoing HTTP request to ''%1''.', Comment = '%1 - url, e.g. https://microsoft.com';
         ConnectionErr: Label 'Connection to the remote service ''%1'' could not be established.', Comment = '%1 - url, e.g. https://microsoft.com';
+        CanNotConstructURL: Label 'Can not construct URL to Sharepoint. PDF not uploaded';
         vHttpClient: HttpClient;
+        ActivityLogContextTxt: Label 'Sharepoint Setup', Locked = true;
 }
