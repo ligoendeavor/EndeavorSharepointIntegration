@@ -280,12 +280,10 @@ codeunit 87001 "EDX09 Sharepoint Int. Mgmt."
 
     local procedure SaveToken(var SPIntSetup: Record "EDX09 Sharepoint Int. Setup"; AccessToken: Text; ExpireInSec: BigInteger)
     begin
-        with SPIntSetup do begin
-            "EDX09 Access Token Due Date" := CurrentDateTime() + ExpireInSec * 1000;
-            SetAccessToken(AccessToken);
-            Modify();
-            Commit();
-        end;
+        SPIntSetup."EDX09 Access Token Due Date" := CurrentDateTime() + ExpireInSec * 1000;
+        SPIntSetup.SetAccessToken(AccessToken);
+        SPIntSetup.Modify();
+        Commit();
     end;
 
     local procedure ConstructUploadURL(AccessToken: Text; SharepointSite: Text; SharepointDocLibrary: Text; SharepointFullRelativeUrl: Text; FileName: Text): Text

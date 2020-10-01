@@ -30,7 +30,7 @@ codeunit 87000 "EDX09 Sharepoint Int. Events"
 
                     SPMgmt.GetAccessToken(AccessToken);
                     tempBlob.CreateInStream(DocumentStream);
-                    SPMgmt.PutDocumentOnSP(AccessToken, SalesInvoice.RecordId(), DocumentStream, StrSubstNo('%1.pdf', SalesInvHdrNo), SalesInvoice."EDX Sharepoint Site", SalesInvoice."EDX Sharepoint Doc Library", SalesInvoice."EDX Sharepoint Full Url");
+                    SPMgmt.PutDocumentOnSP(AccessToken, SalesInvoice.RecordId(), DocumentStream, StrSubstNo('%1.pdf', SalesInvHdrNo), SalesInvoice."EDX09 Sharepoint Site", SalesInvoice."EDX09 Sharepoint Doc Library", SalesInvoice."EDX09 Sharepoint Full Url");
                 end;
             end;
         end;

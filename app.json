@@ -2,7 +2,7 @@
   "id": "3576b92a-24ca-4661-a8ba-6ffe707595cb",
   "name": "Endeavor Sharepoint Integration",
   "publisher": "Endeavor ERP AB",
-  "version": "16.4.2.3",
+  "version": "17.0.0.0",
   "brief": "",
   "description": "",
   "privacyStatement": "",
@@ -31,7 +31,7 @@
     }
   ],
   "screenshots": [],
-  "platform": "16.0.0.0",
+  "platform": "17.0.0.0",
   "idRanges": [
     {
       "from": 87000,
@@ -39,5 +39,5 @@
     }
   ],
   "showMyCode": false,
-  "runtime": "5.0"
+  "runtime": "6.0"
 }

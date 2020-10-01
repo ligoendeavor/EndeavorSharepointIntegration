@@ -1,3 +1,4 @@
+#pragma implicitwith disable
 pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoices"
 {
     actions
@@ -22,9 +23,9 @@ pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoice
                     SharepointURL: Text;
                     SPMgmt: Codeunit "EDX09 Sharepoint Int. Mgmt.";
                 begin
-                    DocumentRef.Get(RecordId);
-                    FieldRef := DocumentRef.FIELD(FieldNo("No."));
-                    FieldRef.SETFILTER("No.");
+                    DocumentRef.Get(Rec.RecordId);
+                    FieldRef := DocumentRef.FIELD(Rec.FieldNo("No."));
+                    FieldRef.SETFILTER(Rec."No.");
 
                     tempBlob.CreateOutStream(outStreamReport, TextEncoding::UTF8);
                     Report.SaveAs(Report::"Standard Sales - Invoice", '', ReportFormat::Pdf, outStreamReport, DocumentRef);
@@ -32,7 +33,7 @@ pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoice
                     SPMgmt.GetAccessToken(AccessToken);
                     tempBlob.CreateInStream(DocumentStream);
                     if Confirm(UploadQuestion) then
-                        SPMgmt.PutDocumentOnSP(AccessToken, RecordId(), DocumentStream, StrSubstNo('%1.pdf', "No."), "EDX Sharepoint Site", "EDX Sharepoint Doc Library", "EDX Sharepoint Full Url");
+                        SPMgmt.PutDocumentOnSP(AccessToken, Rec.RecordId(), DocumentStream, StrSubstNo('%1.pdf', Rec."No."), Rec."EDX09 Sharepoint Site", Rec."EDX09 Sharepoint Doc Library", Rec."EDX09 Sharepoint Full Url");
                 end;
             }
         }
@@ -49,3 +50,4 @@ pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoice
         UploadQuestion: Label 'Do you want to upload PDF to Sharepoint? Existing file will be replaced.';
         ShowSharepointAction: Boolean;
 }
+#pragma implicitwith restore

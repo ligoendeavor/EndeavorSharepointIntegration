@@ -4,14 +4,15 @@
         {
             "type": "al",
             "request": "launch",
-            "name": "Microsoft cloud IntegrationTest",
+            "name": "Microsoft cloud UpgradeV17",
             "startupObjectId": 143,
             "startupObjectType": "Page",
             "breakOnError": true,
             "launchBrowser": true,
             //"enableLongRunningSqlStatements": true,
             //"enableSqlInformationDebugger": true,
-            "sandboxName": "IntegrationTest",
+            "sandboxName": "UpgradeV17",
+            "tenant": "3b2de1f1-4306-444d-bed8-e724ef455f1d",
             "schemaUpdateMode": "ForceSync"
         }
     ]

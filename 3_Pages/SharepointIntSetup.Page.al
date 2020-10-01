@@ -1,3 +1,4 @@
+#pragma implicitwith disable
 page 87001 "EDX09 Sharepoint Int. Setup"
 {
     PageType = Card;
@@ -12,48 +13,48 @@ page 87001 "EDX09 Sharepoint Int. Setup"
             group(SharepointIntegrationSetup)
             {
                 Caption = 'Sharepoint Integration Setup';
-                field("EDX09 Code"; "EDX09 Code")
+                field("EDX09 Code"; Rec."EDX09 Code")
                 {
                     ApplicationArea = All;
                     Visible = false;
                 }
-                field("EDX09 Enabled"; "EDX09 Enabled")
+                field("EDX09 Enabled"; Rec."EDX09 Enabled")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Description"; "EDX09 Description")
+                field("EDX09 Description"; Rec."EDX09 Description")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 MS Graph URL Path"; "EDX09 MS Graph URL Path")
+                field("EDX09 MS Graph URL Path"; Rec."EDX09 MS Graph URL Path")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Service URL"; "EDX09 Service URL")
+                field("EDX09 Service URL"; Rec."EDX09 Service URL")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Sharepoint Base URL"; "EDX09 Sharepoint Base URL")
+                field("EDX09 Sharepoint Base URL"; Rec."EDX09 Sharepoint Base URL")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Access Token URL Path"; "EDX09 Access Token URL Path")
+                field("EDX09 Access Token URL Path"; Rec."EDX09 Access Token URL Path")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Authorization URL Path"; "EDX09 Authorization URL Path")
+                field("EDX09 Authorization URL Path"; Rec."EDX09 Authorization URL Path")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Redirect URL"; "EDX09 Redirect URL")
+                field("EDX09 Redirect URL"; Rec."EDX09 Redirect URL")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Scope"; "EDX09 Scope")
+                field("EDX09 Scope"; Rec."EDX09 Scope")
                 {
                     ApplicationArea = All;
                 }
-                field("EDX09 Auth. Response Type"; "EDX09 Auth. Response Type")
+                field("EDX09 Auth. Response Type"; Rec."EDX09 Auth. Response Type")
                 {
                     ApplicationArea = All;
                 }
@@ -65,7 +66,7 @@ page 87001 "EDX09 Sharepoint Int. Setup"
 
                     trigger OnValidate()
                     begin
-                        SetClientID(ClientID);
+                        Rec.SetClientID(ClientID);
                         Clear(ClientID);
                     end;
                 }
@@ -77,7 +78,7 @@ page 87001 "EDX09 Sharepoint Int. Setup"
 
                     trigger OnValidate()
                     begin
-                        SetClientSecret(ClientSecret);
+                        Rec.SetClientSecret(ClientSecret);
                         Clear(ClientSecret);
                     end;
                 }
@@ -112,3 +113,4 @@ page 87001 "EDX09 Sharepoint Int. Setup"
 
 
 }
+#pragma implicitwith restore
