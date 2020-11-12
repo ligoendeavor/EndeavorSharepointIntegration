@@ -1,4 +1,4 @@
-#pragma implicitwith disable
+//#pragma implicitwith disable
 pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoices"
 {
     actions
@@ -50,4 +50,4 @@ pageextension 87000 "EDX09 PostedSalesInvoicesExt" extends "Posted Sales Invoice
         UploadQuestion: Label 'Do you want to upload PDF to Sharepoint? Existing file will be replaced.';
         ShowSharepointAction: Boolean;
 }
-#pragma implicitwith restore
+//#pragma implicitwith restore

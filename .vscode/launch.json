@@ -2,18 +2,18 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Microsoft cloud sandbox IntegrationTest",
             "type": "al",
             "request": "launch",
-            "name": "Microsoft cloud UpgradeV17",
-            "startupObjectId": 143,
-            "startupObjectType": "Page",
+            "startupObjectId": 22,
             "breakOnError": true,
+            "breakOnRecordWrite": false,
             "launchBrowser": true,
-            //"enableLongRunningSqlStatements": true,
-            //"enableSqlInformationDebugger": true,
-            "sandboxName": "UpgradeV17",
-            "tenant": "3b2de1f1-4306-444d-bed8-e724ef455f1d",
-            "schemaUpdateMode": "ForceSync"
+            "schemaUpdateMode": "ForceSync",
+            "enableLongRunningSqlStatements": true,
+            "enableSqlInformationDebugger": true,
+            "sandboxName": "develop",
+            "tenant": "e21dbd94-a418-4c71-bb92-a930e6009182"
         }
     ]
 }

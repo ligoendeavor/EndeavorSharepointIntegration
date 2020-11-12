@@ -1,4 +1,4 @@
-#pragma implicitwith disable
+//#pragma implicitwith disable
 page 87001 "EDX09 Sharepoint Int. Setup"
 {
     PageType = Card;
@@ -113,4 +113,4 @@ page 87001 "EDX09 Sharepoint Int. Setup"
 
 
 }
-#pragma implicitwith restore
+//#pragma implicitwith restore
