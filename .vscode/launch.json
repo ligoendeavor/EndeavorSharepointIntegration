@@ -2,7 +2,7 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Microsoft cloud sandbox IntegrationTest",
+            "name": "Microsoft cloud sandbox upgradev17",
             "type": "al",
             "request": "launch",
             "startupObjectId": 22,
@@ -12,7 +12,7 @@
             "schemaUpdateMode": "ForceSync",
             "enableLongRunningSqlStatements": true,
             "enableSqlInformationDebugger": true,
-            "sandboxName": "develop",
+            "sandboxName": "upgradev17",
             "tenant": "e21dbd94-a418-4c71-bb92-a930e6009182"
         }
     ]
